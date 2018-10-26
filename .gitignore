@@ -5,3 +5,5 @@ __pycache__/
 
 # self
 json/recipe_images.json
+json/test_all.json
+.ipynb_checkpoints/
