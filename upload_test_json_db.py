@@ -4,19 +4,36 @@ import datetime as dt
 
 import connect_db as con
 
+def update_recipe(recipe):
+    r_id = recipe['id']
+
+    img_path = 'none'
+    if recipe.get('images'):
+        img = recipe['images'][0]['id']
+
+        data_path = 'media/data/images/test/'
+        img = '/'.join(list(img.replace('.jpg',''))[0:4]) + '/' + img
+        img_path = '/' + data_path + img
+
+    sql = '''
+        UPDATE `recipe` SET img_path = '{}'
+        WHERE id = '{}'
+    '''.format(img_path, r_id)
+    cur.execute(sql)
+
 def insert_recipe(recipe):
     r_id = recipe['id']
     title = recipe['title'].replace('"', "'").replace("'", "''")
     created_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    if recipe['image_id'] == 'none':
-        img_path = 'none'
-    else:
-        imgur_id = img_imgur[recipe['image_id']]
-        img_path = 'https://i.imgur.com/{}.jpg'.format(imgur_id)
+
+    img_path = 'none'
+    if recipe.get('images'):
+        img_path = recipe['images'][0]['id']
+
 
     sql = '''
         INSERT INTO `recipe` (`id`, `creator_id`, `title`, `created_at`, `avg_star`, `img_path`, `source_type`)
-        VALUES ('{}', '17', "{}", '{}', 0, '{}', 'system')
+        VALUES ('{}', '17', "{}", '{}', 0, '{}', 'temp')
     '''.format(r_id, title, created_at, img_path)
     cur.execute(sql)
 
@@ -45,23 +62,23 @@ if __name__ == '__main__':
     con.connect()
     cur = con.db.cursor()
 
-    # === test for add user ===
-    # cur.execute('''
-    #     INSERT INTO `account` (`user_id`, `email`, `password`, `name`, `gender`, `pic_path`)
-    #     VALUES (NULL, 'projectx@gmail.com', '', 'admin', 'none', '');
-    # ''')
-
     # === insert recipe ===
-    with open('./json/recipes_out.json') as json_f:
+    with open('./json/test_all.json') as json_f:
         recipes = json.loads(json_f.read())
-    with open('./json/img_imgur.json') as json_f:
-        img_imgur = json.loads(json_f.read())
 
-    for rec in recipes:
+    for i, rec in enumerate(recipes):
+        if i % 5000 == 0:
+            print(i, len(recipes))
+            con.db.commit()
         try:
-            insert_recipe(rec)
-        except:
+            # insert_recipe(rec)
+            update_recipe(rec)
+        except Exception as e:
+            # print(e)
             pass
+
+    # for rec in recipes:
+    #     insert_recipe(rec)
 
     con.db.commit()
     con.db.close()
